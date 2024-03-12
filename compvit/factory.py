@@ -14,7 +14,6 @@ from dinov2.layers import MemEffAttention
 from dinov2.layers import NestedTensorBlock as Block
 
 from .models.compvit import CompViT
-from .models.mae import MAECompVit
 
 CONFIG_PATH = Path(os.path.dirname(os.path.abspath(__file__))) / "configs"
 

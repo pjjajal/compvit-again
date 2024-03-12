@@ -93,7 +93,7 @@ class LightningDistill(L.LightningModule):
         self.running_loss = 0
         self.lowest_batch_loss = float("inf")
 
-    @torch.inference_mode()
+    @torch.no_grad()
     def forward_teacher(self, x):
         x = self.teacher.forward(x, is_training=True)
         cls_token = x["x_norm_clstoken"]
@@ -120,10 +120,10 @@ class LightningDistill(L.LightningModule):
         x, y = batch
 
         # Teacher forward.
-        teacher_encodings = self.teacher(self.downsize(x))
+        teacher_encodings = self.forward_teacher(self.downsize(x))
 
         # Student forward.
-        student_encodings = self.student(x)
+        student_encodings = self.forward_student(x)
         decoded_encodings = self.decoder(student_encodings)
 
         # Loss.
@@ -160,9 +160,9 @@ class LightningDistill(L.LightningModule):
             self.running_loss = 0
             # Save Model
             save_path = self.args.save_loc / f"best_performing.pth"
-            save_path_pt = self.args.save_loc / f"best_performing_pt.pth"
-            torch.save(self.model.encoder.state_dict(), save_path)
-            torch.save(self.model.state_dict(), save_path_pt)
+            save_path_decoder = self.args.save_loc / f"best_decoder.pth"
+            torch.save(self.student.state_dict(), save_path)
+            torch.save(self.decoder.state_dict(), save_path_decoder)
 
 
 def main(args):
@@ -194,13 +194,10 @@ def main(args):
     if decoder_checkpoint:
         student.load_state_dict(torch.load(decoder_checkpoint))
 
-    teacher = torch.compile(teacher)
-    teacher.eval()
-
     model = LightningDistill(student, teacher, args, hyperparameters, config)
 
     # # Setup W&B.
-    wandb_logger = WandbLogger(project="compvit-rcac")
+    wandb_logger = WandbLogger(project="compvit-again-rcac")
     wandb_logger.experiment.config.update(
         {
             "architecture": "mae",

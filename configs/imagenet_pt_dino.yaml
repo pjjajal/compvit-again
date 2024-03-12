@@ -4,8 +4,8 @@ teacher:
 
 student:
   name: compvitl14
-  # checkpoint: "/scratch/gilbreth/pjajal/dinov2_vitl14_pretrain.pth"
-  checkpoint: "/scratch/gilbreth/pjajal/checkpoints/mae_2024-03-10-170301/best_performing.pth"
+  checkpoint: "/scratch/gilbreth/pjajal/dinov2_vitl14_pretrain.pth"
+  # checkpoint: "/scratch/gilbreth/pjajal/checkpoints/mae_2024-03-10-170301/best_performing.pth"
   decoder_checkpoint: ""
 
 hyperparameters:
