@@ -9,18 +9,19 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as tvt
+import wandb
 from ffcv.loader import Loader, OrderOption
-from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import LearningRateMonitor
+from lightning.pytorch.loggers import WandbLogger
 from omegaconf import OmegaConf
+from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-import wandb
-from compvit.factory import mae_factory
-from compvit.models.mae import MAECompVit
+from compvit.factory import distill_factory
+from compvit.models.compvit import CompViT
 from datasets import create_dataset
 from datasets.imagenet_ffcv import create_train_pipeline, create_val_pipeline
-from dinov2.factory import dinov2_factory
+from dinov2.models.vision_transformer import DinoVisionTransformer
 from utils.schedulers import CosineAnnealingWithWarmup
 
 CONFIG_PATH = Path("./configs")
@@ -62,28 +63,81 @@ def parse_args():
     return parser.parse_args()
 
 
-class LightningMAE(L.LightningModule):
-    def __init__(self, model: MAECompVit, args, hyperparameters) -> None:
+class LightningDistill(L.LightningModule):
+    def __init__(
+        self,
+        student: CompViT,
+        teacher: DinoVisionTransformer,
+        args,
+        hyperparameters,
+        config,
+    ):
         super().__init__()
-        self.model = model
-        self.hyperparameters = hyperparameters
+        # Args, hyperparameters, and config.
         self.args = args
+        self.hyperparameters = hyperparameters
+        self.config = config
+        self.distill_conf = config["distill"]
+
+        # Student and teacher models.
+        self.student = student
+        self.teacher = teacher
+
+        # Decoder.
+        self.decoder = nn.Linear(student.embed_dim * 2, teacher.embed_dim * 2)
+
+        # Transformations.
         self.downsize = tvt.Resize(args.downsize)
 
+        # Loss tracking.
         self.running_loss = 0
         self.lowest_batch_loss = float("inf")
 
+    @torch.inference_mode()
+    def forward_teacher(self, x):
+        x = self.teacher.forward(x, is_training=True)
+        cls_token = x["x_norm_clstoken"]
+        patch_tokens = x["x_norm_patchtokens"]
+        x = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
+        return x
+
+    def forward_student(self, x):
+        x = self.student.forward(x, is_training=True)
+        cls_token = x["x_norm_clstoken"]
+        patch_tokens = x["x_norm_patchtokens"]
+        x = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
+        return x
+
+    def calculate_loss(self, x, x_teacher):
+        if self.distill_conf["loss"] == "l2":
+            return F.mse_loss(x, x_teacher, reduction="mean")
+        elif self.distill_conf["loss"] == "smooth":
+            return F.smooth_l1_loss(x, x_teacher, reduction="mean")
+        else:
+            raise NotImplementedError(f"Loss {self.distill_conf['loss']} not implemented")
+
     def training_step(self, batch, batch_idx):
         x, y = batch
-        loss = self.model(x, self.downsize(x))
+
+        # Teacher forward.
+        teacher_encodings = self.teacher(self.downsize(x))
+
+        # Student forward.
+        student_encodings = self.student(x)
+        decoded_encodings = self.decoder(student_encodings)
+
+        # Loss.
+        loss = self.calculate_loss(decoded_encodings, teacher_encodings)
+
         # Running loss.
         self.running_loss += loss.detach().item()
         self.log("train loss", loss, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def configure_optimizers(self):
+        parameters = list(self.student.parameters()) + list(self.decoder.parameters())
         optimizer = optim.AdamW(
-            self.model.training_parameters(whole=True),
+            parameters,
             lr=self.hyperparameters["lr"],
             weight_decay=5e-2,
         )
@@ -114,8 +168,8 @@ class LightningMAE(L.LightningModule):
 def main(args):
     config_path = CONFIG_PATH / (args.dataset + "_pt_dino" + ".yaml")
     configs = OmegaConf.load(config_path)
-    baseline_config = configs["teacher"]
-    compvit_config = configs["student"]
+    teacher_config = configs["teacher"]
+    student_config = configs["student"]
     hyperparameters = configs["hyperparameters"]
 
     # Merging config with CLI args. CLI is prioritized over config.
@@ -125,31 +179,34 @@ def main(args):
     )
 
     # Get checkpoint paths.
-    baseline_checkpoint = baseline_config.pop("checkpoint")
-    student_checkpoint = compvit_config.pop("checkpoint")
-    decoder_checkpoint = compvit_config.pop("decoder_checkpoint")
+    teacher_checkpoint = teacher_config.pop("checkpoint")
+    student_checkpoint = student_config.pop("checkpoint")
+    decoder_checkpoint = student_config.pop("decoder_checkpoint")
 
     # Create MAE.
-    model, config = mae_factory(
-        teacher_name=baseline_config["name"], student_name=compvit_config["name"]
+    student, teacher, config = distill_factory(
+        teacher_name=teacher_config["name"], student_name=student_config["name"]
     )
-    if baseline_checkpoint:
-        model.baseline.load_state_dict(torch.load(baseline_checkpoint), strict=False)
+    if teacher_checkpoint:
+        teacher.load_state_dict(torch.load(teacher_checkpoint))
     if student_checkpoint:
-        model.encoder.load_state_dict(torch.load(student_checkpoint), strict=False)
+        student.load_state_dict(torch.load(student_checkpoint), strict=False)
     if decoder_checkpoint:
-        model.decoder.load_state_dict(torch.load(decoder_checkpoint))
+        student.load_state_dict(torch.load(decoder_checkpoint))
 
-    model = LightningMAE(model, args, hyperparameters)
+    teacher = torch.compile(teacher)
+    teacher.eval()
 
-    # Setup W&B.
+    model = LightningDistill(student, teacher, args, hyperparameters, config)
+
+    # # Setup W&B.
     wandb_logger = WandbLogger(project="compvit-rcac")
     wandb_logger.experiment.config.update(
         {
             "architecture": "mae",
             # "dataset": args.dataset,
-            "teacher": baseline_config["name"],
-            "student": compvit_config["name"],
+            "teacher": teacher_config["name"],
+            "student": student_config["name"],
             **config,
             **hyperparameters,
             **args,
@@ -157,7 +214,7 @@ def main(args):
     )
 
     # Create lr monitor
-    lr_monitor = LearningRateMonitor(logging_interval='step')
+    lr_monitor = LearningRateMonitor(logging_interval="step")
 
     # Create trainer.
     trainer = L.Trainer(
@@ -168,14 +225,16 @@ def main(args):
         max_epochs=hyperparameters["epochs"],
         logger=wandb_logger,
         benchmark=True,  # cudnn benchmarking, allows for faster training.
-        enable_checkpointing=False, # Disable automatic checkpointing (we do this manually).
+        enable_checkpointing=False,  # Disable automatic checkpointing (we do this manually).
         callbacks=[lr_monitor],
         overfit_batches=args.overfit_batches,
     )
 
     # Create dataset and train loader.
     image_pipeline, label_pipeline = create_train_pipeline(
-        device=torch.device(f"cuda:{trainer.local_rank}"), pretraining=True, input_size=224
+        device=torch.device(f"cuda:{trainer.local_rank}"),
+        pretraining=True,
+        input_size=224,
     )
     order = OrderOption.QUASI_RANDOM
     loader = Loader(
@@ -194,13 +253,12 @@ def main(args):
 if __name__ == "__main__":
     args = parse_args()
 
-    now = "mae_" + datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    now = "distill_" + datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
-        
     save_loc = DEFAULT_CHECKPOINTS_PATH / now
     if args.checkpoints_path:
         save_loc = args.checkpoints_path / now
-    
+
     if not save_loc.exists():
         save_loc.mkdir(parents=True, exist_ok=True)
 

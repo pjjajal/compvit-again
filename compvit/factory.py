@@ -37,46 +37,23 @@ def compvit_factory(
     )
 
 
-def mae_factory(
+def distill_factory(
     teacher_name: Literal[
         "dinov2_vits14", "dinov2_vitb14", "dinov2_vitl14", "dinov2_vitg14"
     ],
     student_name: Literal["compvits14", "compvitb14", "compvitl14", "compvitg14"],
 ):
-    config_path = CONFIG_PATH / "mae.yaml"
-    conf = OmegaConf.load(config_path)
-
-    decoder_conf = conf["decoder"]
+    config_path = CONFIG_PATH / "distill.yaml"
+    distill_conf = OmegaConf.load(config_path)
 
     teacher, dino_conf = dinov2_factory(teacher_name)
 
     student, compvit_conf = compvit_factory(student_name)
-
-    # decoder_layer = nn.TransformerDecoderLayer(
-    #     d_model=decoder_conf["decoder_dim"],
-    #     nhead=decoder_conf["nhead"],
-    #     dim_feedforward=int(student.embed_dim * decoder_conf["mlp_ratio"]),
-    #     dropout=0.0,
-    #     activation=F.gelu,
-    #     layer_norm_eps=1e-5,
-    #     batch_first=True,
-    #     norm_first=True,
-    # )
-    # decoder = nn.TransformerDecoder(decoder_layer, decoder_conf["num_layers"])
-    decoder = None
-
+    
     return (
-        MAECompVit(
-            baseline=teacher,
-            encoder=student,
-            decoder=decoder,
-            baseline_embed_dim=teacher.embed_dim,
-            embed_dim=student.embed_dim,
-            decoder_embed_dim=decoder_conf["decoder_dim"],
-            norm_layer=LayerNorm,
-            loss=conf["loss"],
-        ),
-        {**dino_conf, **compvit_conf, **decoder_conf},
+        student,
+        teacher,
+        {**dino_conf, **compvit_conf, **distill_conf},
     )
 
 
