@@ -225,6 +225,7 @@ def main(args):
         enable_checkpointing=False,  # Disable automatic checkpointing (we do this manually).
         callbacks=[lr_monitor],
         overfit_batches=args.overfit_batches,
+        log_every_n_steps=50
     )
 
     # Create dataset and train loader.
