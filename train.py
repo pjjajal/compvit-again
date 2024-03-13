@@ -229,21 +229,30 @@ def main(args):
     )
 
     # Create dataset and train loader.
-    image_pipeline, label_pipeline = create_train_pipeline(
-        device=torch.device(f"cuda:{trainer.local_rank}"),
-        pretraining=True,
-        input_size=224,
-    )
-    order = OrderOption.QUASI_RANDOM
-    loader = Loader(
-        fname=args.data_dir,
+    train_dataset, test_dataset = create_dataset(args)
+    loader = DataLoader(
+        train_dataset,
         batch_size=hyperparameters["batch_size"],
+        shuffle=False if args.overfit_batches else True,
         num_workers=hyperparameters["num_workers"],
-        order=order,
-        os_cache=hyperparameters["in_memory"],
+        pin_memory=True,
         drop_last=True,
-        pipelines={"image": image_pipeline, "label": label_pipeline},
     )
+    # image_pipeline, label_pipeline = create_train_pipeline(
+    #     device=torch.device(f"cuda:{trainer.local_rank}"),
+    #     pretraining=True,
+    #     input_size=224,
+    # )
+    # order = OrderOption.QUASI_RANDOM
+    # loader = Loader(
+    #     fname=args.data_dir,
+    #     batch_size=hyperparameters["batch_size"],
+    #     num_workers=hyperparameters["num_workers"],
+    #     order=order,
+    #     os_cache=hyperparameters["in_memory"],
+    #     drop_last=True,
+    #     pipelines={"image": image_pipeline, "label": label_pipeline},
+    # )
     # Trainer Fit.
     trainer.fit(model, loader)
 

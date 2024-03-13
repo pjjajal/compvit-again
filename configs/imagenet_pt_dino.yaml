@@ -4,7 +4,8 @@ teacher:
 
 student:
   name: compvitl14
-  checkpoint: "/scratch/gilbreth/pjajal/dinov2_vitl14_pretrain.pth"
+  # checkpoint: "/scratch/gilbreth/pjajal/dinov2_vitl14_pretrain.pth"
+  checkpoint: "/scratch/gilbreth/pjajal/checkpoints-again/distill_2024-03-12-194719/best_performing.pth"
   # checkpoint: "/scratch/gilbreth/pjajal/checkpoints/mae_2024-03-10-170301/best_performing.pth"
   decoder_checkpoint: ""
 
@@ -24,5 +25,6 @@ hyperparameters:
 args:
   device: cuda:0
   # data_dir: "/scratch/gilbreth/pjajal/datasets/train_500_0.5_90.ffcv"
-  data_dir: "/scratch/gilbreth/pjajal/datasets/train_500_0.0_90.ffcv"
+  # data_dir: "/scratch/gilbreth/pjajal/datasets/train_500_0.0_90.ffcv"
+  data_dir: "/scratch/gilbreth/pjajal/datasets/imagenet-1k"
   precision: "bf16-mixed"

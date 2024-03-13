@@ -237,6 +237,7 @@ def main(args):
         benchmark=True,  # cudnn benchmarking, allows for faster training.
         enable_checkpointing=False,  # Disable automatic checkpointing (we do this manually).
         callbacks=[lr_monitor],
+        log_every_n_steps=50
     )
 
     # Create dataset and train loader.
@@ -278,7 +279,7 @@ def main(args):
     loader = DataLoader(
         train_dataset,
         batch_size=hyperparameters["batch_size"],
-        shuffle=True,
+        shuffle=False if args.overfit_batches else True,
         num_workers=hyperparameters["num_workers"],
         pin_memory=True,
         drop_last=True,
