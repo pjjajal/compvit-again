@@ -55,7 +55,7 @@ def parse_args():
     )
     parser.add_argument(
         "--overfit_batches",
-        type=int,
+        type=float,
         default=0,
         help="Overfit on a subset of the data for debugging purposes",
     )

@@ -5,7 +5,7 @@ dinov2:
 compvit:
   name: compvitl14
   # checkpoint: "/scratch/gilbreth/pjajal/dinov2_vitl14_pretrain.pth"
-  checkpoint: "/scratch/gilbreth/pjajal/checkpoints/mae_2024-03-09-132303/best_performing.pth"
+  checkpoint: "/scratch/gilbreth/pjajal/checkpoints-again/distill_2024-03-13-215601/best_performing.pth"
 
 head:
   num_classes: 1000
@@ -13,10 +13,10 @@ head:
 
 
 hyperparameters:
-  lr: 1.0E-03
-  min_lr: 1.0e-6
+  lr: 1.0E-04
+  min_lr: 1.0e-7
   warmup_lr_scale: 1.0e-4
-  warmup_epochs: 5
+  warmup_epochs: 10
   batch_size: 512
   test_batch_size: 32
   num_workers: 32
@@ -24,7 +24,7 @@ hyperparameters:
   mixup_alpha: 0.8 
   accumulations: 1
   in_memory: False
-  gradient_clip_val: 1.0
+  gradient_clip_val: 0.5
 
 args:
   device: cuda:0

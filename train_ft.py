@@ -58,7 +58,7 @@ def parse_args():
     )
     parser.add_argument(
         "--overfit_batches",
-        type=int,
+        type=float,
         default=0,
         help="Overfit on a subset of the data for debugging purposes",
     )
@@ -214,7 +214,7 @@ def main(args):
     model = LightningFT(model, args, hyperparameters)
 
     # Setup W&B.
-    wandb_logger = WandbLogger(project="compvit-dt")
+    wandb_logger = WandbLogger(project="compvit-again-rcac")
     wandb_logger.experiment.config.update(
         {
             **config,
@@ -237,6 +237,7 @@ def main(args):
         benchmark=True,  # cudnn benchmarking, allows for faster training.
         enable_checkpointing=False,  # Disable automatic checkpointing (we do this manually).
         callbacks=[lr_monitor],
+        overfit_batches=args.overfit_batches,
         log_every_n_steps=50
     )
 
@@ -308,5 +309,5 @@ if __name__ == "__main__":
         save_loc.mkdir(parents=True, exist_ok=True)
 
     args.save_loc = save_loc
-    args.pretraining = True
+    args.pretraining = False
     main(args)
