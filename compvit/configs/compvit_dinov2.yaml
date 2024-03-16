@@ -18,7 +18,7 @@ compvits14:
   bottleneck_locs: [5, 6]
   bottleneck_size: 1
   num_codebook_tokens: 384
-  inv_bottleneck: "inverted_mlp"
+  inv_bottleneck: "identity"
   inv_bottle_size: 1
   codebook_ratio: 2
 
@@ -42,7 +42,7 @@ compvitb14:
   bottleneck_locs: [5, 6]
   bottleneck_size: 1
   num_codebook_tokens: 384
-  inv_bottleneck: "inverted_mlp"
+  inv_bottleneck: "identity"
   inv_bottle_size: 1
   codebook_ratio: 2
 
@@ -67,7 +67,7 @@ compvitl14:
   bottleneck_locs: [5, 6]
   bottleneck_size: 1
   num_codebook_tokens: 384
-  inv_bottleneck: "inverted_mlp"
+  inv_bottleneck: "identity"
   inv_bottle_size: 1
   codebook_ratio: 4
 
@@ -92,7 +92,7 @@ compvitg14:
   bottleneck_locs: [10, 11]
   bottleneck_size: 3
   num_codebook_tokens: 384
-  inv_bottleneck: "inverted_mlp"
+  inv_bottleneck: "identity"
   inv_bottle_size: 1
   codebook_ratio: 4
 

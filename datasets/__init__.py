@@ -20,4 +20,6 @@ def create_dataset(args):
         train_dataset, test_dataset = create_cifar100_dataset(args)
     elif args.dataset == "cifar10":
         train_dataset, test_dataset = create_cifar10_dataset(args)
+    elif args.dataset == "imagenet-21k":
+        pass
     return train_dataset, test_dataset
