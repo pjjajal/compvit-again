@@ -140,7 +140,8 @@ class LightningDistill(L.LightningModule):
 
         # Running loss.
         self.running_loss += loss.detach().item()
-        self.log("train loss", loss, on_epoch=True, prog_bar=True, logger=True)
+        if self.global_rank == 0:
+            self.log("train loss", loss, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def configure_optimizers(self):
@@ -168,10 +169,11 @@ class LightningDistill(L.LightningModule):
             self.lowest_batch_loss = self.running_loss
             self.running_loss = 0
             # Save Model
-            save_path = self.args.save_loc / f"best_performing.pth"
-            save_path_decoder = self.args.save_loc / f"best_decoder.pth"
-            torch.save(self.student.state_dict(), save_path)
-            torch.save(self.decoder.state_dict(), save_path_decoder)
+            if self.global_rank == 0: 
+                save_path = self.args.save_loc / f"best_performing.pth"
+                save_path_decoder = self.args.save_loc / f"best_decoder.pth"
+                torch.save(self.student.state_dict(), save_path)
+                torch.save(self.decoder.state_dict(), save_path_decoder)
 
 
 def main(args):
@@ -207,17 +209,6 @@ def main(args):
 
     # # Setup W&B.
     wandb_logger = WandbLogger(project="compvit-again-rcac")
-    wandb_logger.experiment.config.update(
-        {
-            "architecture": "mae",
-            # "dataset": args.dataset,
-            "teacher": teacher_config["name"],
-            "student": student_config["name"],
-            **config,
-            **hyperparameters,
-            **args,
-        }
-    )
 
     # Create lr monitor
     lr_monitor = LearningRateMonitor(logging_interval="step")
@@ -234,8 +225,22 @@ def main(args):
         enable_checkpointing=False,  # Disable automatic checkpointing (we do this manually).
         callbacks=[lr_monitor],
         overfit_batches=args.overfit_batches,
-        log_every_n_steps=50
+        log_every_n_steps=50,
+        strategy='ddp_find_unused_parameters_true'
     )
+
+    if trainer.global_rank == 0: 
+        wandb_logger.experiment.config.update(
+            {
+                "architecture": "mae",
+                # "dataset": args.dataset,
+                "teacher": teacher_config["name"],
+                "student": student_config["name"],
+                **config,
+                **hyperparameters,
+                **args,
+            }
+        )
 
     # Create dataset and train loader.
     train_dataset, test_dataset = create_dataset(args)
