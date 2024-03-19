@@ -17,7 +17,7 @@ hyperparameters:
   warmup_epochs: 10
   batch_size: 256
   num_workers: 32
-  epochs: 150
+  epochs: 300
   mixup_alpha: 0.8 
   accumulations: 8
   in_memory: False
