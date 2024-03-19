@@ -33,7 +33,7 @@ torch.set_float32_matmul_precision("medium")
 def parse_args():
     parser = argparse.ArgumentParser("training and evaluation script")
     parser.add_argument(
-        "--dataset", required=True, choices=["cifar10", "cifar100", "imagenet"]
+        "--dataset", required=True, choices=["cifar10", "cifar100", "imagenet", "imagenet-21k"]
     )
     parser.add_argument("--downsize", required=True, type=int, default=224)
     parser.add_argument("--devices", type=int, default=1)
@@ -59,6 +59,8 @@ def parse_args():
         default=0,
         help="Overfit on a subset of the data for debugging purposes",
     )
+    parser.add_argument("--augmentations", type=bool, default=False, help="Use augmentations")
+    parser.add_argument("--symmetric", type=bool, default=False, help="Use symmetric downsize")
 
     return parser.parse_args()
 
@@ -123,7 +125,7 @@ class LightningDistill(L.LightningModule):
         teacher_encodings = self.forward_teacher(self.downsize(x))
 
         # Student forward.
-        student_encodings = self.forward_student(x)
+        student_encodings = self.forward_student(self.downsize(x) if self.args.symmetric else x)
         decoded_encodings = self.decoder(student_encodings)
 
         # Loss.

@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import OmegaConf
-from torch.nn import LayerNorm
 
 from dinov2.factory import dinov2_factory
 from dinov2.layers import MemEffAttention
@@ -29,9 +28,7 @@ def compvit_factory(
     conf = OmegaConf.merge(conf[model_name], kwargs)
 
     return (
-        CompViT(
-            block_fn=partial(Block, attn_class=MemEffAttention), **conf
-        ),
+        CompViT(block_fn=partial(Block, attn_class=MemEffAttention), **conf),
         conf,
     )
 
@@ -48,7 +45,7 @@ def distill_factory(
     teacher, dino_conf = dinov2_factory(teacher_name)
 
     student, compvit_conf = compvit_factory(student_name)
-    
+
     return (
         student,
         teacher,
@@ -58,9 +55,3 @@ def distill_factory(
 
 if __name__ == "__main__":
     model, conf = compvit_factory("compvits14")
-    print(model)
-    print(conf)
-
-    print(model(torch.randn(1, 3, 224, 224)).shape)
-    print(model(torch.randn(1, 3, 56, 56)).shape)
-    print(model(torch.randn(1, 3, 112, 112)).shape)

@@ -12,9 +12,9 @@ def make_normalize_transform(
 ) -> tvt.Normalize:
     return tvt.Normalize(mean=mean, std=std)
 
-def create_imagenet21k_dataset(data_dir, augmentations=False):
+def create_imagenet21k_dataset(args):
     augments = []
-    if augmentations:
+    if args.augmentations:
         augments.extend(
             [
                 tvt.RandomChoice([
@@ -36,4 +36,4 @@ def create_imagenet21k_dataset(data_dir, augmentations=False):
         ]
     )
 
-    return ImageFolder(root=data_dir, transform=transform)
+    return ImageFolder(root=args.data_dir, transform=transform)
