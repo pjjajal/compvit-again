@@ -8,7 +8,7 @@ import lightning as L
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision.transforms as tvt
+import torchvision.transforms.v2 as tvt
 import wandb
 from ffcv.loader import Loader, OrderOption
 from lightning.pytorch.callbacks import LearningRateMonitor
@@ -61,6 +61,7 @@ def parse_args():
     )
     parser.add_argument("--augmentations", type=bool, default=False, help="Use augmentations")
     parser.add_argument("--symmetric", type=bool, default=False, help="Use symmetric downsize")
+    parser.add_argument("--use_mixup", type=bool, default=False, help="Use mixup")
 
     return parser.parse_args()
 
@@ -91,6 +92,9 @@ class LightningDistill(L.LightningModule):
         # Transformations.
         self.downsize = tvt.Resize(args.downsize)
 
+        if args.use_mixup:
+            self.mixup = tvt.MixUp(alpha=hyperparameters['mixup_alpha'], num_classes=1000)
+
         # Loss tracking.
         self.running_loss = 0
         self.lowest_batch_loss = float("inf")
@@ -120,6 +124,9 @@ class LightningDistill(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
+
+        if self.args.use_mixup:
+            x, y = self.mixup(x, y)
 
         # Teacher forward.
         teacher_encodings = self.forward_teacher(self.downsize(x))

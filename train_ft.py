@@ -8,7 +8,7 @@ import lightning as L
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision.transforms as tvt
+import torchvision.transforms.v2 as tvt
 
 # from ffcv.loader import Loader, OrderOption
 from lightning.pytorch.callbacks import LearningRateMonitor
@@ -108,6 +108,8 @@ class LightningFT(L.LightningModule):
         self.args = args
         self.criterion = nn.CrossEntropyLoss()
 
+        self.mixup = tvt.MixUp(hyperparameters['mixup_alpha'], model.num_classes)
+
         self.running_loss = 0
         self.highest_val_accuracy = float("-inf")
         self.accuracy_top1 = Accuracy(
@@ -119,6 +121,7 @@ class LightningFT(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, label = batch
+        x, label = self.mixup(x, label)
         outputs = self.model(x)
         loss = self.criterion(outputs, label)
         # Running loss.
