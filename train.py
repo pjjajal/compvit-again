@@ -59,9 +59,9 @@ def parse_args():
         default=0,
         help="Overfit on a subset of the data for debugging purposes",
     )
-    parser.add_argument("--augmentations", type=bool, default=False, help="Use augmentations")
-    parser.add_argument("--symmetric", type=bool, default=False, help="Use symmetric downsize")
-    parser.add_argument("--use_mixup", type=bool, default=False, help="Use mixup")
+    parser.add_argument("--augmentations", default=False, action="store_true", help="Use augmentations")
+    parser.add_argument("--symmetric", default=False, action="store_true", help="Use symmetric downsize")
+    parser.add_argument("--use_mixup", default=False, action="store_true", help="Use mixup")
 
     return parser.parse_args()
 
