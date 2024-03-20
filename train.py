@@ -190,9 +190,9 @@ def main(args):
     )
 
     # Get checkpoint paths.
-    teacher_checkpoint = teacher_config.pop("checkpoint")
-    student_checkpoint = student_config.pop("checkpoint")
-    decoder_checkpoint = student_config.pop("decoder_checkpoint")
+    teacher_checkpoint = teacher_config["checkpoint"]
+    student_checkpoint = student_config["checkpoint"]
+    decoder_checkpoint = student_config["decoder_checkpoint"]
 
     # Create MAE.
     student, teacher, config = distill_factory(
@@ -252,21 +252,6 @@ def main(args):
         pin_memory=True,
         drop_last=True,
     )
-    # image_pipeline, label_pipeline = create_train_pipeline(
-    #     device=torch.device(f"cuda:{trainer.local_rank}"),
-    #     pretraining=True,
-    #     input_size=224,
-    # )
-    # order = OrderOption.QUASI_RANDOM
-    # loader = Loader(
-    #     fname=args.data_dir,
-    #     batch_size=hyperparameters["batch_size"],
-    #     num_workers=hyperparameters["num_workers"],
-    #     order=order,
-    #     os_cache=hyperparameters["in_memory"],
-    #     drop_last=True,
-    #     pipelines={"image": image_pipeline, "label": label_pipeline},
-    # )
     # Trainer Fit.
     trainer.fit(model, loader)
 
