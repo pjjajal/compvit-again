@@ -108,7 +108,7 @@ class LightningFT(L.LightningModule):
         self.args = args
         self.criterion = nn.CrossEntropyLoss()
 
-        self.mixup = tvt.MixUp(hyperparameters['mixup_alpha'], model.num_classes)
+        self.mixup = tvt.MixUp(alpha=hyperparameters['mixup_alpha'], num_classes=model.num_classes)
 
         self.running_loss = 0
         self.highest_val_accuracy = float("-inf")
@@ -181,8 +181,9 @@ class LightningFT(L.LightningModule):
         if acc > self.highest_val_accuracy:
             self.highest_val_accuracy = acc
             # Save Model
-            save_path = self.args.save_loc / f"best_performing.pth"
-            torch.save(self.model.state_dict(), save_path)
+            if self.global_rank == 0: 
+                save_path = self.args.save_loc / f"best_performing.pth"
+                torch.save(self.model.state_dict(), save_path)
 
 
 def main(args):
@@ -218,13 +219,6 @@ def main(args):
 
     # Setup W&B.
     wandb_logger = WandbLogger(project="compvit-again-rcac")
-    wandb_logger.experiment.config.update(
-        {
-            **config,
-            **hyperparameters,
-            **args,
-        }
-    )
 
     # Create lr monitor
     lr_monitor = LearningRateMonitor(logging_interval="step")
@@ -241,8 +235,18 @@ def main(args):
         enable_checkpointing=False,  # Disable automatic checkpointing (we do this manually).
         callbacks=[lr_monitor],
         overfit_batches=args.overfit_batches,
-        log_every_n_steps=50
+        log_every_n_steps=50,
+        strategy='ddp_find_unused_parameters_true'
     )
+
+    if trainer.global_rank == 0: 
+        wandb_logger.experiment.config.update(
+            {
+                **config,
+                **hyperparameters,
+                **args,
+            }
+        )
 
     # Create dataset and train loader.
     # image_pipeline, label_pipeline = create_train_pipeline(
