@@ -34,10 +34,10 @@ compvitb14:
   interpolate_offset: 0.1
   # Compressor Specific
   num_patches: 256
-  num_compressed_tokens: 16
+  num_compressed_tokens: 32
   bottleneck: "conv_bottleneck"
   bottleneck_locs: [5, 6]
-  bottleneck_size: 1
+  bottleneck_size: 6
 
 
 

@@ -93,7 +93,7 @@ class LightningDistill(L.LightningModule):
         self.downsize = tvt.Resize(args.downsize)
 
         if args.use_mixup:
-            self.mixup = tvt.MixUp(alpha=hyperparameters['mixup_alpha'], num_classes=1000)
+            self.mixup = tvt.MixUp(alpha=hyperparameters['mixup_alpha'], num_classes=10450)
 
         # Loss tracking.
         self.running_loss = 0
@@ -236,6 +236,8 @@ def main(args):
                 # "dataset": args.dataset,
                 "teacher": teacher_config["name"],
                 "student": student_config["name"],
+                "teacher_checkpoint": teacher_config["checkpoint"],
+                "student_checkpoint": student_config["checkpoint"],
                 **config,
                 **hyperparameters,
                 **args,
