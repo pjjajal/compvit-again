@@ -10,7 +10,9 @@ compvits14:
   block_chunks: 0 
   num_register_tokens: 0 
   interpolate_antialias: False 
-  interpolate_offset: 0.1
+  interpolate_offset: 0.0
+  drop_path_rate: 0.0
+  drop_path_uniform: True
   # Compressor Specific
   num_patches: 256
   num_compressed_tokens: 16
@@ -32,6 +34,8 @@ compvitb14:
   num_register_tokens: 0 
   interpolate_antialias: False 
   interpolate_offset: 0.1
+  drop_path_rate: 0.1
+  drop_path_uniform: True
   # Compressor Specific
   num_patches: 256
   num_compressed_tokens: 32
@@ -54,6 +58,8 @@ compvitl14:
   num_register_tokens: 0 
   interpolate_antialias: False 
   interpolate_offset: 0.1
+  drop_path_rate: 0.3
+  drop_path_uniform: True
   # Compressor Specific
   num_patches: 256
   num_compressed_tokens: 8
@@ -75,6 +81,8 @@ compvitg14:
   num_register_tokens: 0 
   interpolate_antialias: False 
   interpolate_offset: 0.1
+  drop_path_rate: 0.5
+  drop_path_uniform: True
   # Compressor Specific
   num_patches: 256
   num_compressed_tokens: 16

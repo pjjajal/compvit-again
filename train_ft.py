@@ -249,40 +249,6 @@ def main(args):
         )
 
     # Create dataset and train loader.
-    # image_pipeline, label_pipeline = create_train_pipeline(
-    #     device=torch.device(f"cuda:{trainer.local_rank}"),
-    #     pretraining=False,
-    #     input_size=224,
-    #     mixup_alpha=hyperparameters["mixup_alpha"],
-    #     num_classes=head_config["num_classes"],
-    # )
-    # order = OrderOption.QUASI_RANDOM
-    # loader = Loader(
-    #     fname=args.data_dir_train,
-    #     batch_size=hyperparameters["batch_size"],
-    #     num_workers=hyperparameters["num_workers"],
-    #     order=order,
-    #     os_cache=hyperparameters["in_memory"],
-    #     drop_last=True,
-    #     pipelines={"image": image_pipeline, "label": label_pipeline},
-    # )
-
-    # # Create test loader.
-    # test_image_pipeline, test_label_pipeline = create_val_pipeline(
-    #     device=torch.device(f"cuda:{trainer.local_rank}"),
-    #     input_size=224,
-    # )
-    # order = OrderOption.SEQUENTIAL
-    # test_loader = Loader(
-    #     fname=args.data_dir_test,
-    #     batch_size=hyperparameters["batch_size"],
-    #     num_workers=hyperparameters["num_workers"],
-    #     order=order,
-    #     os_cache=hyperparameters["in_memory"],
-    #     drop_last=False,
-    #     pipelines={"image": test_image_pipeline, "label": test_label_pipeline},
-    # )
-
     train_dataset, test_dataset = create_dataset(args)
     loader = DataLoader(
         train_dataset,
