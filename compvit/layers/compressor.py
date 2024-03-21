@@ -79,6 +79,9 @@ class Compressor(nn.Module):
         # Compressing tokens
         compressed_tokens = self.bottleneck(x)
 
+
+        # TODO Change this so that the output of the block_1
+        # gets cat'd to the original patch tokens
         # Transfer to compressed tokens
         x = torch.concat([x, compressed_tokens], dim=1)
         compressed_tokens = self.block_1(x, compressed_tokens, get_attn)
