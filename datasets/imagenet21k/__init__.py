@@ -21,7 +21,7 @@ def create_imagenet21k_dataset(args):
                 tvt.RandomResizedCrop(224),
                 tvt.RandomHorizontalFlip(),
                 tvt.RandomChoice([
-                    tvt.GaussianBlur(),
+                    tvt.GaussianBlur(7),
                     tvt.RandomSolarize(threshold=0.5, p=1), 
                     tvt.RandomGrayscale(p=1)
                 ]),

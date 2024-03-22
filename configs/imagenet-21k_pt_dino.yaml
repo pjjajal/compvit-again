@@ -19,6 +19,7 @@ hyperparameters:
   num_workers: 32
   epochs: 300
   mixup_alpha: 1.0 
+  mixup_classes: 10450
   accumulations: 8
   in_memory: False
   gradient_clip_val: 0.5

@@ -33,7 +33,9 @@ torch.set_float32_matmul_precision("medium")
 def parse_args():
     parser = argparse.ArgumentParser("training and evaluation script")
     parser.add_argument(
-        "--dataset", required=True, choices=["cifar10", "cifar100", "imagenet", "imagenet-21k"]
+        "--dataset",
+        required=True,
+        choices=["cifar10", "cifar100", "imagenet", "imagenet-21k"],
     )
     parser.add_argument("--downsize", required=True, type=int, default=224)
     parser.add_argument("--devices", type=int, default=1)
@@ -59,9 +61,15 @@ def parse_args():
         default=0,
         help="Overfit on a subset of the data for debugging purposes",
     )
-    parser.add_argument("--augmentations", default=False, action="store_true", help="Use augmentations")
-    parser.add_argument("--symmetric", default=False, action="store_true", help="Use symmetric downsize")
-    parser.add_argument("--use_mixup", default=False, action="store_true", help="Use mixup")
+    parser.add_argument(
+        "--augmentations", default=False, action="store_true", help="Use augmentations"
+    )
+    parser.add_argument(
+        "--symmetric", default=False, action="store_true", help="Use symmetric downsize"
+    )
+    parser.add_argument(
+        "--use_mixup", default=False, action="store_true", help="Use mixup"
+    )
 
     return parser.parse_args()
 
@@ -93,7 +101,10 @@ class LightningDistill(L.LightningModule):
         self.downsize = tvt.Resize(args.downsize)
 
         if args.use_mixup:
-            self.mixup = tvt.MixUp(alpha=hyperparameters['mixup_alpha'], num_classes=10450)
+            self.mixup = tvt.MixUp(
+                alpha=hyperparameters["mixup_alpha"],
+                num_classes=hyperparameters["mixup_classes"],
+            )
 
         # Loss tracking.
         self.running_loss = 0
@@ -120,7 +131,9 @@ class LightningDistill(L.LightningModule):
         elif self.distill_conf["loss"] == "smooth":
             return F.smooth_l1_loss(x, x_teacher, reduction="mean")
         else:
-            raise NotImplementedError(f"Loss {self.distill_conf['loss']} not implemented")
+            raise NotImplementedError(
+                f"Loss {self.distill_conf['loss']} not implemented"
+            )
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -132,7 +145,9 @@ class LightningDistill(L.LightningModule):
         teacher_encodings = self.forward_teacher(self.downsize(x))
 
         # Student forward.
-        student_encodings = self.forward_student(self.downsize(x) if self.args.symmetric else x)
+        student_encodings = self.forward_student(
+            self.downsize(x) if self.args.symmetric else x
+        )
         decoded_encodings = self.decoder(student_encodings)
 
         # Loss.
@@ -169,7 +184,7 @@ class LightningDistill(L.LightningModule):
             self.lowest_batch_loss = self.running_loss
             self.running_loss = 0
             # Save Model
-            if self.global_rank == 0: 
+            if self.global_rank == 0:
                 save_path = self.args.save_loc / f"best_performing.pth"
                 save_path_decoder = self.args.save_loc / f"best_decoder.pth"
                 torch.save(self.student.state_dict(), save_path)
@@ -226,10 +241,10 @@ def main(args):
         callbacks=[lr_monitor],
         overfit_batches=args.overfit_batches,
         log_every_n_steps=50,
-        strategy='ddp_find_unused_parameters_true'
+        strategy="ddp_find_unused_parameters_true",
     )
 
-    if trainer.global_rank == 0: 
+    if trainer.global_rank == 0:
         wandb_logger.experiment.config.update(
             {
                 "architecture": "mae",
