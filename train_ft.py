@@ -154,7 +154,7 @@ class LightningFT(L.LightningModule):
         self.log("test loss", loss, on_epoch=True, prog_bar=True, logger=True)
 
     def configure_optimizers(self):
-        if self.args.model == "dinov2":
+        if self.args.model == "dinov2" or self.args.head:
             parameters = self.model.head.parameters()
         else:
             parameters = self.model.parameters()

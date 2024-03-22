@@ -169,3 +169,4 @@ logs
 **/wandb
 **/data/*
 **/*/*.pth
+*.pth

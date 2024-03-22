@@ -235,10 +235,6 @@ def test_compvit(args):
         {colour_text("bottleneck_locs", 'cyan')}: {config['bottleneck_locs']}
         {colour_text("bottleneck_size", 'cyan')}: {config['bottleneck_size']}
         {colour_text("bottleneck", 'cyan')}: {config['bottleneck']}
-        {colour_text("num_codebook_tokens", 'cyan')}: {config['num_codebook_tokens']}
-        {colour_text("inv_bottleneck", 'cyan')}: {config['inv_bottleneck']}
-        {colour_text("inv_bottle_size", 'cyan')}: {config['inv_bottle_size']}
-        {colour_text("codebook_ratio", 'cyan')}: {config['codebook_ratio']}
         {colour_text("Mean (ms)", "magenta")}: {latency_mean:.2f} 
         {colour_text("Median (ms)", "magenta")}: {latency_median:.2f}
         {colour_text("IQR (ms)", "magenta")}: {latency_iqr:.2f}
@@ -256,10 +252,6 @@ def test_compvit(args):
                 "bottleneck_locs": config["bottleneck_locs"][0],
                 "bottleneck_size": config["bottleneck_size"],
                 "bottleneck": config["bottleneck"],
-                "num_codebook_tokens": config["num_codebook_tokens"],
-                "inv_bottleneck": config["inv_bottleneck"],
-                "inv_bottle_size": config["inv_bottle_size"],
-                "codebook_ratio": config["codebook_ratio"],
                 "Mean (ms)": latency_mean,
                 "Median (ms)": latency_median,
                 "IQR (ms)": latency_iqr,
@@ -335,10 +327,6 @@ def compvit_sweep(args):
         {colour_text("bottleneck_locs", 'cyan')}: {config['bottleneck_locs']}
         {colour_text("bottleneck_size", 'cyan')}: {config['bottleneck_size']}
         {colour_text("bottleneck", 'cyan')}: {config['bottleneck']}
-        {colour_text("num_codebook_tokens", 'cyan')}: {config['num_codebook_tokens']}
-        {colour_text("inv_bottleneck", 'cyan')}: {config['inv_bottleneck']}
-        {colour_text("inv_bottle_size", 'cyan')}: {config['inv_bottle_size']}
-        {colour_text("codebook_ratio", 'cyan')}: {config['codebook_ratio']}
         {colour_text("Mean (ms)", "magenta")}: {latency_mean:.2f}
         {colour_text("Median (ms)", "magenta")}: {latency_median:.2f}
         {colour_text("IQR (ms)", "magenta")}: {latency_iqr:.2f}
@@ -357,10 +345,6 @@ def compvit_sweep(args):
                 "bottleneck_locs": config["bottleneck_locs"][0],
                 "bottleneck_size": config["bottleneck_size"],
                 "bottleneck": config["bottleneck"],
-                "num_codebook_tokens": config["num_codebook_tokens"],
-                "inv_bottleneck": config["inv_bottleneck"],
-                "inv_bottle_size": config["inv_bottle_size"],
-                "codebook_ratio": config["codebook_ratio"],
                 "Mean (ms)": latency_mean,
                 "Median (ms)": latency_median,
                 "IQR (ms)": latency_iqr,
