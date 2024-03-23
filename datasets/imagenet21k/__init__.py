@@ -1,5 +1,6 @@
 from typing import Sequence
 
+import json
 import torch
 import torchvision.transforms.v2 as tvt
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
@@ -45,7 +46,8 @@ def create_imagenet21k_dataset(args):
     
     cached_data = None
     if args.cache_path:
-        cached_data = torch.load(args.cache_path)
+        with open(args.cache_path, "r") as f:
+            cached_data = json.load(f)
     
     return CachedImageFolder(root=args.data_dir, transform=transform, cached_data=cached_data)
 

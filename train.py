@@ -1,4 +1,5 @@
 import argparse
+import json
 import math
 from datetime import datetime
 from pathlib import Path
@@ -70,7 +71,9 @@ def parse_args():
     parser.add_argument(
         "--use_mixup", default=False, action="store_true", help="Use mixup"
     )
-    parser.add_argument("--cache_save_path", type=Path, default=None, help="Path where to cache data")
+    parser.add_argument(
+        "--cache_save_path", type=Path, default=None, help="Path where to cache data"
+    )
 
     return parser.parse_args()
 
@@ -268,9 +271,16 @@ def main(args):
 
     # Create dataset and train loader.
     train_dataset, test_dataset = create_dataset(args)
-    if args.cache_save_path:
+    
+    # Cache data for imagnet-21k.
+    if args.cache_save_path and args.dataset == "imagenet-21k":
         cache_data = train_dataset.cache_data()
-        torch.save(cache_data, args.cache_save_path / f"{args.dataset}_cache_data.pth")
+        args.cache_save_path.mkdir(parents=True, exist_ok=True)
+        save_path = args.cache_save_path / f"{args.dataset}_cache_data.json"
+        with open(save_path, "w") as f:
+            json.dump(cache_data, f)
+
+    # Create train loader.
     loader = DataLoader(
         train_dataset,
         batch_size=hyperparameters["batch_size"],
