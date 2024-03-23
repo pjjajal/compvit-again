@@ -155,8 +155,8 @@ class LightningDistill(L.LightningModule):
 
         # Running loss.
         self.running_loss += loss.detach().item()
-        if self.global_rank == 0:
-            self.log("train loss", loss, on_epoch=True, prog_bar=True, logger=True)
+        # if self.global_rank == 0:
+        self.log("train loss", loss, on_epoch=True, prog_bar=True, logger=True,)
         return loss
 
     def configure_optimizers(self):
