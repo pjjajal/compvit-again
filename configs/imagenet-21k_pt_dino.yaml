@@ -28,4 +28,5 @@ args:
   device: cuda:0
   # data_dir: "/scratch/gilbreth/pjajal/datasets/imagenet-1k"
   data_dir: "/depot/yunglu/data/pj/imagenet21k/imagenet21k/imagenet21k_resized/imagenet21k_train"
+  cache_path: ""
   precision: "bf16-mixed"

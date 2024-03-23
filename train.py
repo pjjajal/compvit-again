@@ -70,6 +70,7 @@ def parse_args():
     parser.add_argument(
         "--use_mixup", default=False, action="store_true", help="Use mixup"
     )
+    parser.add_argument("--cache_save_path", type=Path, default=None, help="Path where to cache data")
 
     return parser.parse_args()
 
@@ -156,7 +157,13 @@ class LightningDistill(L.LightningModule):
         # Running loss.
         self.running_loss += loss.detach().item()
         # if self.global_rank == 0:
-        self.log("train loss", loss, on_epoch=True, prog_bar=True, logger=True,)
+        self.log(
+            "train loss",
+            loss,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
         return loss
 
     def configure_optimizers(self):
@@ -261,6 +268,9 @@ def main(args):
 
     # Create dataset and train loader.
     train_dataset, test_dataset = create_dataset(args)
+    if args.cache_save_path:
+        cache_data = train_dataset.cache_data()
+        torch.save(cache_data, args.cache_save_path / f"{args.dataset}_cache_data.pth")
     loader = DataLoader(
         train_dataset,
         batch_size=hyperparameters["batch_size"],

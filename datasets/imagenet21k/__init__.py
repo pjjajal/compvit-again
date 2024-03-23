@@ -4,6 +4,7 @@ import torch
 import torchvision.transforms.v2 as tvt
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torchvision.datasets import ImageFolder
+from utils.cfolder import CachedImageFolder
 
 
 def make_normalize_transform(
@@ -11,6 +12,7 @@ def make_normalize_transform(
     std: Sequence[float] = IMAGENET_DEFAULT_STD,
 ) -> tvt.Normalize:
     return tvt.Normalize(mean=mean, std=std)
+
 
 def create_imagenet21k_dataset(args):
     if args.augmentations:
@@ -20,15 +22,17 @@ def create_imagenet21k_dataset(args):
                 tvt.ToDtype(torch.float32, scale=True),
                 tvt.RandomResizedCrop(224),
                 tvt.RandomHorizontalFlip(),
-                tvt.RandomChoice([
-                    tvt.GaussianBlur(7),
-                    tvt.RandomSolarize(threshold=0.5, p=1), 
-                    tvt.RandomGrayscale(p=1)
-                ]),
+                tvt.RandomChoice(
+                    [
+                        tvt.GaussianBlur(7),
+                        tvt.RandomSolarize(threshold=0.5, p=1),
+                        tvt.RandomGrayscale(p=1),
+                    ]
+                ),
                 make_normalize_transform(),
             ]
         )
-    else: 
+    else:
         transform = tvt.Compose(
             [
                 tvt.ToImage(),
@@ -38,5 +42,11 @@ def create_imagenet21k_dataset(args):
                 make_normalize_transform(),
             ]
         )
+    
+    cached_data = None
+    if args.cache_path:
+        cached_data = torch.load(args.cache_path)
+    
+    return CachedImageFolder(root=args.data_dir, transform=transform, cached_data=cached_data)
 
-    return ImageFolder(root=args.data_dir, transform=transform)
+    # return ImageFolder(root=args.data_dir, transform=transform)
