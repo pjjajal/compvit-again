@@ -124,13 +124,8 @@ def conv_bottleneck(num_tokens, num_compressed_tokens, dim, ratio, bottleneck_si
     class Net(nn.Module):
         def __init__(self) -> None:
             super().__init__()
+            self.num_compressed_tokens = num_compressed_tokens
             self.blocks = nn.Sequential(*[NeXtBlock() for _ in range(bottleneck_size)])
-            self.pooling = nn.AdaptiveAvgPool1d(
-                num_compressed_tokens - 1
-            )  # subtract 1 to account for CLS
-            # self.pooling = nn.Linear(
-            #     num_tokens - 1, num_compressed_tokens - 1
-            # )
 
         def forward(self, x):
             B, N, C = x.shape
@@ -139,7 +134,7 @@ def conv_bottleneck(num_tokens, num_compressed_tokens, dim, ratio, bottleneck_si
             x = x.mT.reshape((B, C, H, W))
             x = self.blocks(x)
             x = x.reshape((B, C, -1))
-            x = self.pooling(x).mT
+            x = F.adaptive_avg_pool1d(x, self.num_compressed_tokens - 1).mT # subtract 1 to account for CLS
             x = torch.concat([cls_token, x], dim=1)
             return x
 

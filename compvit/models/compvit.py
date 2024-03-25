@@ -148,6 +148,10 @@ class CompViT(DinoVisionTransformer):
                 bottleneck=bottleneck,
             )
 
+    def set_compressed_tokens(self, num_compressed_tokens):
+        self.num_compressed_tokens = num_compressed_tokens + 1
+        self.compressor.set_compressed_tokens(self.num_compressed_tokens)
+
     def forward_features(self, x, masks=None, get_attn=False):
         if isinstance(x, list):
             return self.forward_features_list(x, masks)

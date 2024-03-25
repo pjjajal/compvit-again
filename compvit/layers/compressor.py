@@ -63,15 +63,14 @@ class Compressor(nn.Module):
             attn_class=CrossAttention,
         )
 
-        self.global_center = nn.Parameter(
-            torch.zeros((1, self.num_compressed_tokens, dim)),
-            requires_grad=True,
-        )
-
         self.init_weights()
 
     def init_weights(self):
         nn.init.normal_(self.global_center, std=1e-6)
+
+    def set_compressed_tokens(self, compressed_tokens):
+        self.num_compressed_tokens = compressed_tokens
+        self.bottleneck.num_compressed_tokens = compressed_tokens
 
     def forward(self, x, get_attn=False):
         B, N, C = x.shape
@@ -87,7 +86,7 @@ class Compressor(nn.Module):
         # Refine compressed tokens
         x2 = torch.concat([x, compressed_tokens], dim=1)
         compressed_tokens = self.block_2(
-            x2, compressed_tokens + self.global_center, get_attn
+            x2, compressed_tokens, get_attn
         )
 
         return compressed_tokens
