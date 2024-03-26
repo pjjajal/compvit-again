@@ -72,6 +72,9 @@ def parse_args():
         "--use_mixup", default=False, action="store_true", help="Use mixup"
     )
     parser.add_argument(
+        "--ccr_loss", default=False, action="store_true", help="Use CCR loss"
+    )
+    parser.add_argument(
         "--cache_save_path", type=Path, default=None, help="Path where to cache data"
     )
 
@@ -138,6 +141,16 @@ class LightningDistill(L.LightningModule):
             raise NotImplementedError(
                 f"Loss {self.distill_conf['loss']} not implemented"
             )
+        
+    def calculate_ccr_loss(self, x, x_teacher):
+        x_norm = x.norm(dim=-1)
+        x_teacher_norm = x_teacher.norm(dim=-1)
+
+        cc_x = (x @ x.T) / x_norm.outer(x_norm)
+        cc_x_teacher = (x_teacher @ x_teacher.T) / x_teacher_norm.outer(x_teacher_norm)
+
+        return F.mse_loss(cc_x, cc_x_teacher, reduction="sum")
+
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -156,6 +169,18 @@ class LightningDistill(L.LightningModule):
 
         # Loss.
         loss = self.calculate_loss(decoded_encodings, teacher_encodings)
+
+        if self.args.ccr_loss:
+            # CCR Loss.
+            ccr_loss = self.calculate_ccr_loss(decoded_encodings, teacher_encodings)
+            loss += self.distill_conf['ccr_beta'] * ccr_loss
+            self.log(
+                "ccr loss",
+                ccr_loss,
+                on_epoch=True,
+                prog_bar=True,
+                logger=True,
+            )
 
         # Running loss.
         self.running_loss += loss.detach().item()
