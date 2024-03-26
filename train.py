@@ -148,8 +148,9 @@ class LightningDistill(L.LightningModule):
 
         cc_x = (x @ x.T) / x_norm.outer(x_norm)
         cc_x_teacher = (x_teacher @ x_teacher.T) / x_teacher_norm.outer(x_teacher_norm)
-
-        return F.mse_loss(cc_x, cc_x_teacher, reduction="sum")
+        
+        return F.l1_loss(cc_x, cc_x_teacher, reduction="mean")
+        return F.mse_loss(cc_x, cc_x_teacher, reduction="mean")
 
 
     def training_step(self, batch, batch_idx):
@@ -172,8 +173,8 @@ class LightningDistill(L.LightningModule):
 
         if self.args.ccr_loss:
             # CCR Loss.
-            ccr_loss = self.calculate_ccr_loss(decoded_encodings, teacher_encodings)
-            loss += self.distill_conf['ccr_beta'] * ccr_loss
+            ccr_loss = self.distill_conf['ccr_beta'] * self.calculate_ccr_loss(decoded_encodings, teacher_encodings)
+            loss += ccr_loss
             self.log(
                 "ccr loss",
                 ccr_loss,

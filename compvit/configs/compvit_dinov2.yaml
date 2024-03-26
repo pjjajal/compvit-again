@@ -41,7 +41,7 @@ compvitb14:
   num_compressed_tokens: 32
   bottleneck: "conv_bottleneck"
   bottleneck_locs: [5, 6]
-  bottleneck_size: 6
+  bottleneck_size: 3
 
 
 
