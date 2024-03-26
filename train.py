@@ -1,6 +1,5 @@
 import argparse
 import json
-import math
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -11,7 +10,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms.v2 as tvt
 import wandb
-from ffcv.loader import Loader, OrderOption
 from lightning.pytorch.callbacks import LearningRateMonitor
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import OmegaConf
