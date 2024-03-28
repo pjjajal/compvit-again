@@ -37,6 +37,12 @@ def parse_args():
     parser.add_argument("--model", required=True, choices=["dinov2", "compvit"])
     parser.add_argument("--head", action="store_true")
     parser.add_argument("--eval", action="store_true")
+    parser.add_argument(
+        "--use_mixup", default=False, action="store_true", help="Use mixup"
+    )
+    parser.add_argument(
+        "--use_cutmix", default=False, action="store_true", help="Use cutmix"
+    )
     parser.add_argument("--devices", type=int, default=1)
     parser.add_argument("--num_nodes", type=int, default=1)
     parser.add_argument("--checkpoints_path", type=Path, default=None)
@@ -106,7 +112,22 @@ class LightningFT(L.LightningModule):
         self.args = args
         self.criterion = nn.CrossEntropyLoss()
 
-        self.mixup = tvt.MixUp(alpha=hyperparameters['mixup_alpha'], num_classes=model.num_classes)
+        self.cutmix_or_mixup = []
+        if args.use_mixup:
+            self.cutmix_or_mixup.append(
+                tvt.MixUp(
+                    alpha=hyperparameters["mixup_alpha"],
+                    num_classes=hyperparameters["mixup_classes"],
+                )
+            )
+        if args.use_cutmix:
+            self.cutmix_or_mixup.append(
+                tvt.CutMix(
+                    alpha=hyperparameters["mixup_alpha"],
+                    num_classes=hyperparameters["mixup_classes"],
+                )
+            )
+        self.cutmix_or_mixup = tvt.RandomChoice(self.cutmix_or_mixup)
 
         self.running_loss = 0
         self.highest_val_accuracy = float("-inf")
@@ -119,7 +140,7 @@ class LightningFT(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, label = batch
-        x, label = self.mixup(x, label)
+        x, label = self.cutmix_or_mixup(x, label)
         outputs = self.model(x)
         loss = self.criterion(outputs, label)
         # Running loss.
