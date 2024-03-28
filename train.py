@@ -20,7 +20,6 @@ from torch.utils.data import DataLoader
 from compvit.factory import distill_factory
 from compvit.models.compvit import CompViT
 from datasets import create_dataset
-from datasets.imagenet_ffcv import create_train_pipeline, create_val_pipeline
 from dinov2.models.vision_transformer import DinoVisionTransformer
 from utils.schedulers import CosineAnnealingWithWarmup
 
@@ -108,14 +107,6 @@ class LightningDistill(L.LightningModule):
 
         # Transformations.
         self.downsize = tvt.Resize(args.downsize)
-        if args.round_robin:
-            self.downsize = tvt.RandomChoice(
-                [
-                    tvt.Resize(56),
-                    tvt.Resize(112),
-                    tvt.Resize(224),
-                ]
-            )
 
         if args.use_mixup:
             self.mixup = tvt.MixUp(
@@ -160,24 +151,39 @@ class LightningDistill(L.LightningModule):
         cc_x_teacher = (x_teacher @ x_teacher.T) / x_teacher_norm.outer(x_teacher_norm)
 
         return F.mse_loss(cc_x, cc_x_teacher, reduction="mean")
+    
+    def round_robin(self):
+        return random.choice(
+            [
+                tvt.Resize(56),
+                tvt.Resize(112),
+                tvt.Resize(224),
+            ]
+        )
 
     def training_step(self, batch, batch_idx):
         x, y = batch
+
+        if args.round_robin:
+            resize_op = self.round_robin()
+        else:
+            resize_op = self.downsize
 
         if self.args.use_mixup:
             x, y = self.mixup(x, y)
 
         # Teacher forward.
-        teacher_encodings = self.forward_teacher(self.downsize(x))
+        teacher_encodings = self.forward_teacher(resize_op(x))
 
         # Student forward.
         student_encodings = self.forward_student(
-            self.downsize(x) if self.args.symmetric else x
+            resize_op(x) if self.args.symmetric else x
         )
         decoded_encodings = self.decoder(student_encodings)
 
         # Loss.
         loss = self.calculate_loss(decoded_encodings, teacher_encodings)
+        l2_loss = loss.detach().item()
 
         if self.args.ccr_loss:
             # CCR Loss.
@@ -193,9 +199,16 @@ class LightningDistill(L.LightningModule):
                 logger=True,
             )
 
+
         # Running loss.
         self.running_loss += loss.detach().item()
-        # if self.global_rank == 0:
+        self.log(
+            "l2 loss",
+            l2_loss,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
         self.log(
             "train loss",
             loss,

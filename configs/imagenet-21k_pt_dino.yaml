@@ -4,29 +4,28 @@ teacher:
 
 student:
   name: compvitb14
-  # checkpoint: ""
+  checkpoint: ""
   # checkpoint: "/scratch/gilbreth/pjajal/dinov2_vitl14_pretrain.pth"
-  checkpoint: "/scratch/gilbreth/pjajal/checkpoints-again/distill_2024-03-20-183732/best_performing.pth"
-  # checkpoint: "/scratch/gilbreth/pjajal/checkpoints/mae_2024-03-10-170301/best_performing.pth"
+  # checkpoint: "/scratch/gilbreth/pjajal/checkpoints-again/distill_2024-03-27-001620/best_performing.pth"
   decoder_checkpoint: ""
 
 hyperparameters:
-  lr: 2.5E-04
+  lr: 1.0E-04
   min_lr: 1.0e-7
   warmup_lr_scale: 1.0e-4
-  warmup_epochs: 10
+  warmup_epochs: 1
   batch_size: 256
   num_workers: 32
-  epochs: 300
+  epochs: 25
   mixup_alpha: 1.0 
   mixup_classes: 10450
   accumulations: 8
   in_memory: False
-  gradient_clip_val: 0.5
+  gradient_clip_val: 0.75
 
 args:
   device: cuda:0
   # data_dir: "/scratch/gilbreth/pjajal/datasets/imagenet-1k"
   data_dir: "/depot/yunglu/data/pj/imagenet21k/imagenet21k/imagenet21k_resized/imagenet21k_train"
-  cache_path: ""
+  cache_path: "/depot/yunglu/data/pj/imagenet21k/imagenet21k_cached_dataset.json"
   precision: "bf16-mixed"
