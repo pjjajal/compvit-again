@@ -70,6 +70,9 @@ def parse_args():
         "--use_mixup", default=False, action="store_true", help="Use mixup"
     )
     parser.add_argument(
+        "--use_cutmix", default=False, action="store_true", help="Use cutmix"
+    )
+    parser.add_argument(
         "--round_robin", default=False, action="store_true", help="Robin robin downsize"
     )
     parser.add_argument(
@@ -108,11 +111,22 @@ class LightningDistill(L.LightningModule):
         # Transformations.
         self.downsize = tvt.Resize(args.downsize)
 
+        self.cutmix_or_mixup = []
         if args.use_mixup:
-            self.mixup = tvt.MixUp(
-                alpha=hyperparameters["mixup_alpha"],
-                num_classes=hyperparameters["mixup_classes"],
+            self.cutmix_or_mixup.append(
+                tvt.MixUp(
+                    alpha=hyperparameters["mixup_alpha"],
+                    num_classes=hyperparameters["mixup_classes"],
+                )
             )
+        if args.use_cutmix:
+            self.cutmix_or_mixup.append(
+                tvt.CutMix(
+                    alpha=hyperparameters["mixup_alpha"],
+                    num_classes=hyperparameters["mixup_classes"],
+                )
+            )
+        self.cutmix_or_mixup = tvt.RandomChoice(self.cutmix_or_mixup)
 
         # Loss tracking.
         self.running_loss = 0
@@ -151,7 +165,7 @@ class LightningDistill(L.LightningModule):
         cc_x_teacher = (x_teacher @ x_teacher.T) / x_teacher_norm.outer(x_teacher_norm)
 
         return F.mse_loss(cc_x, cc_x_teacher, reduction="mean")
-    
+
     def round_robin(self):
         return random.choice(
             [
@@ -169,8 +183,8 @@ class LightningDistill(L.LightningModule):
         else:
             resize_op = self.downsize
 
-        if self.args.use_mixup:
-            x, y = self.mixup(x, y)
+        if self.args.use_mixup or args.use_cutmix:
+            x, y = self.cutmix_or_mixup(x, y)
 
         # Teacher forward.
         teacher_encodings = self.forward_teacher(resize_op(x))
@@ -198,7 +212,6 @@ class LightningDistill(L.LightningModule):
                 prog_bar=True,
                 logger=True,
             )
-
 
         # Running loss.
         self.running_loss += loss.detach().item()
