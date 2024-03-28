@@ -232,7 +232,7 @@ def test_compvit(args):
         {colour_text("Depth", 'cyan')}: {config['depth']}
         {colour_text("Embedding Dim", 'cyan')}: {config['embed_dim']}
         {colour_text("num_compressed_tokens", 'cyan')}: {config['num_compressed_tokens']}
-        {colour_text("bottleneck_locs", 'cyan')}: {config['bottleneck_locs']}
+        {colour_text("bottleneck_loc", 'cyan')}: {config['bottleneck_loc']}
         {colour_text("bottleneck_size", 'cyan')}: {config['bottleneck_size']}
         {colour_text("bottleneck", 'cyan')}: {config['bottleneck']}
         {colour_text("Mean (ms)", "magenta")}: {latency_mean:.2f} 
@@ -249,7 +249,7 @@ def test_compvit(args):
                 "Depth": config["depth"],
                 "Embedding Dim": config["embed_dim"],
                 "num_compressed_tokens": config["num_compressed_tokens"],
-                "bottleneck_locs": config["bottleneck_locs"][0],
+                "bottleneck_locs": config["bottleneck_loc"],
                 "bottleneck_size": config["bottleneck_size"],
                 "bottleneck": config["bottleneck"],
                 "Mean (ms)": latency_mean,
@@ -298,12 +298,12 @@ def compvit_sweep(args):
             model, config = compvit_factory(
                 model_name=model_name,
                 num_compressed_tokens=compressed_tokens,
-                bottleneck_locs=[bottleneck_loc, bottleneck_loc + 1],
+                bottleneck_loc=bottleneck_loc,
             )
         elif bottleneck_loc:
             model, config = compvit_factory(
                 model_name=model_name,
-                bottleneck_locs=[bottleneck_loc, bottleneck_loc + 1],
+                bottleneck_loc=bottleneck_loc,
             )
         elif compressed_tokens:
             model, config = compvit_factory(
@@ -324,7 +324,7 @@ def compvit_sweep(args):
         {colour_text("Depth", 'cyan')}: {config['depth']}
         {colour_text("Embedding Dim", 'cyan')}: {config['embed_dim']}
         {colour_text("num_compressed_tokens", 'cyan')}: {config['num_compressed_tokens']}
-        {colour_text("bottleneck_locs", 'cyan')}: {config['bottleneck_locs']}
+        {colour_text("bottleneck_loc", 'cyan')}: {config['bottleneck_loc']}
         {colour_text("bottleneck_size", 'cyan')}: {config['bottleneck_size']}
         {colour_text("bottleneck", 'cyan')}: {config['bottleneck']}
         {colour_text("Mean (ms)", "magenta")}: {latency_mean:.2f}
@@ -342,7 +342,7 @@ def compvit_sweep(args):
                 "Depth": config["depth"],
                 "Embedding Dim": config["embed_dim"],
                 "num_compressed_tokens": config["num_compressed_tokens"],
-                "bottleneck_locs": config["bottleneck_locs"][0],
+                "bottleneck_locs": config["bottleneck_loc"],
                 "bottleneck_size": config["bottleneck_size"],
                 "bottleneck": config["bottleneck"],
                 "Mean (ms)": latency_mean,

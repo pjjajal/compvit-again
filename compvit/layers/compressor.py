@@ -63,10 +63,10 @@ class Compressor(nn.Module):
             attn_class=CrossAttention,
         )
 
-        self.init_weights()
+        # self.init_weights()
 
-    def init_weights(self):
-        nn.init.normal_(self.global_center, std=1e-6)
+    # def init_weights(self):
+        # nn.init.normal_(self.global_center, std=1e-6)
 
     def set_compressed_tokens(self, compressed_tokens):
         self.num_compressed_tokens = compressed_tokens

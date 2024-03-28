@@ -54,7 +54,7 @@ class CompViT(DinoVisionTransformer):
             "mixer_bottleneck_multi_v2",
             "conv_bottleneck",
         ] = "conv_bottleneck",
-        bottleneck_locs=[5, 6],
+        bottleneck_loc=5,
         bottleneck_size=1,
     ):
         super().__init__(
@@ -105,9 +105,9 @@ class CompViT(DinoVisionTransformer):
             self.compress = True
 
             # Set the blocks where bottleneck will be with None
-            self.bottleneck_locs = [i - 1 for i in bottleneck_locs]
-            for i in self.bottleneck_locs:
-                self.blocks[i] = None
+            self.bottleneck_loc = bottleneck_loc
+            # for i in self.bottleneck_locs:
+            #     self.blocks[i] = None
 
             if bottleneck == "mixer_bottleneck":
                 bottleneck = partial(mixer_bottleneck, dim=embed_dim)
@@ -152,6 +152,9 @@ class CompViT(DinoVisionTransformer):
         self.num_compressed_tokens = num_compressed_tokens + 1
         self.compressor.set_compressed_tokens(self.num_compressed_tokens)
 
+    def set_bottleneck_loc(self, bottleneck_loc):
+        self.bottleneck_loc = bottleneck_loc
+
     def forward_features(self, x, masks=None, get_attn=False):
         if isinstance(x, list):
             return self.forward_features_list(x, masks)
@@ -159,11 +162,8 @@ class CompViT(DinoVisionTransformer):
         x = self.prepare_tokens_with_masks(x, masks)
 
         for i, blk in enumerate(self.blocks):
-            if self.compress and i in self.bottleneck_locs:
-                if i == self.bottleneck_locs[0]:
-                    x = self.compressor(x, get_attn)
-                else:
-                    continue
+            if self.compress and i == self.bottleneck_loc:
+                x = self.compressor(x, get_attn)
             else:
                 x = blk(x)
 
