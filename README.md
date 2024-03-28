@@ -16,6 +16,8 @@ $ conda create -n compvit python=3.9
 $ conda activate compvit
 $ pip install -r requirements.txt
 $ conda install ipykernel # use this if you will be looking at the notebooks.
+$ mim install mmcv-full
+$ mim install mmcvsegmentation
 ```
 
 (This should work, hopefully.)
