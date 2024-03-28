@@ -357,6 +357,7 @@ def compvit_sweep(args):
                 device_info(args).replace(" ", ""),
                 model_name.replace("_", ""),
                 f"bs{args.batch_size}",
+                f"bnsz{config['bottleneck_size']}",
                 f"{args.filetag}",
             ]
         )

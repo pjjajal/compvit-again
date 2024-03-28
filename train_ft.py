@@ -10,7 +10,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms.v2 as tvt
 
-# from ffcv.loader import Loader, OrderOption
 from lightning.pytorch.callbacks import LearningRateMonitor
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import OmegaConf
@@ -20,7 +19,6 @@ from torchmetrics import Accuracy
 from compvit.factory import compvit_factory
 from compvit.models.compvit import CompViT
 from datasets import create_dataset
-from datasets.imagenet_ffcv import create_train_pipeline, create_val_pipeline
 from dinov2.factory import dinov2_factory
 from dinov2.models.vision_transformer import DinoVisionTransformer
 from utils.schedulers import CosineAnnealingWithWarmup
