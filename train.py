@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import List
+import random
 
 import lightning as L
 import torch
@@ -70,6 +71,9 @@ def parse_args():
         "--use_mixup", default=False, action="store_true", help="Use mixup"
     )
     parser.add_argument(
+        "--round_robin", default=False, action="store_true", help="Robin robin downsize"
+    )
+    parser.add_argument(
         "--ccr_loss", default=False, action="store_true", help="Use CCR loss"
     )
     parser.add_argument(
@@ -104,6 +108,14 @@ class LightningDistill(L.LightningModule):
 
         # Transformations.
         self.downsize = tvt.Resize(args.downsize)
+        if args.round_robin:
+            self.downsize = tvt.RandomChoice(
+                [
+                    tvt.Resize(56),
+                    tvt.Resize(112),
+                    tvt.Resize(224),
+                ]
+            )
 
         if args.use_mixup:
             self.mixup = tvt.MixUp(
@@ -139,17 +151,15 @@ class LightningDistill(L.LightningModule):
             raise NotImplementedError(
                 f"Loss {self.distill_conf['loss']} not implemented"
             )
-        
+
     def calculate_ccr_loss(self, x, x_teacher):
         x_norm = x.norm(dim=-1)
         x_teacher_norm = x_teacher.norm(dim=-1)
 
         cc_x = (x @ x.T) / x_norm.outer(x_norm)
         cc_x_teacher = (x_teacher @ x_teacher.T) / x_teacher_norm.outer(x_teacher_norm)
-        
-        return F.l1_loss(cc_x, cc_x_teacher, reduction="mean")
-        return F.mse_loss(cc_x, cc_x_teacher, reduction="mean")
 
+        return F.mse_loss(cc_x, cc_x_teacher, reduction="mean")
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -171,7 +181,9 @@ class LightningDistill(L.LightningModule):
 
         if self.args.ccr_loss:
             # CCR Loss.
-            ccr_loss = self.distill_conf['ccr_beta'] * self.calculate_ccr_loss(decoded_encodings, teacher_encodings)
+            ccr_loss = self.distill_conf["ccr_beta"] * self.calculate_ccr_loss(
+                decoded_encodings, teacher_encodings
+            )
             loss += ccr_loss
             self.log(
                 "ccr loss",
@@ -295,7 +307,7 @@ def main(args):
 
     # Create dataset and train loader.
     train_dataset, test_dataset = create_dataset(args)
-    
+
     # Cache data for imagnet-21k.
     if args.cache_save_path and args.dataset == "imagenet-21k":
         cache_data = train_dataset.cache_data()
